@@ -1,0 +1,107 @@
+#!/bin/bash
+#clear
+
+#Defining all the function about writting style
+function basew()
+{
+  tput sgr0
+}
+
+function boldw()
+{
+  tput sgr0 ; tput bold
+}
+
+function alertw()
+{
+  tput sgr0 ; tput blink ; tput bold ; tput setaf 1
+}
+
+function savew()
+{
+  tput sgr0 ; tput blink ; tput smul ; tput sitm ; tput setaf 2
+}
+
+function succesw()
+{
+  tput sgr0 ; tput sitm ; tput setaf 2
+}
+
+function errorw()
+{
+  tput sgr0 ; tput bold ; tput setaf 1
+}
+
+function delimiter()
+{
+  boldw ; tput blink ; echo -e "\n------------------------------------" ;
+  boldw ; echo " / / / / / / / / / / / / / / / / / /" ;
+  boldw ; tput blink ; echo -e "------------------------------------\n" ; basew
+}
+
+#Defining 2 vars for the OS X Vers, one in the format "10.13.0" and the other one in "10130" so we can compare it
+OSXVers=$(sw_vers | sed -n 's/ProductVersion:.//p')
+CompareVers=$(echo $OSXVers | sed 's/\.//g')
+
+#Announcing the OS X Vers
+echo -e "\nYour OS X version is : $OSXVers\n"
+sleep 2.5
+
+#Comparing the var CompareVers
+if [ $CompareVers -gt "10130" ] ; then
+   #If the OS X Vers can make Snapshots then we ask to do it so we can avoid losing data if the code bugs
+   succesw ; echo -e "This OS X Version is tested, if any bug is encountered please send a message to the creator of the script.\n" ; basew
+   boldw ; echo -e "Your version is compatible with Snapshots.\nDo you want to make one before the script begin ? (Y/N)" ; basew
+   read -r YN
+   if [ $YN == "Y" ] || [ $YN == "Yes" ] || [ $YN == "YES" ] || [ $YN == "y" ] || [ $YN == "yes" ] ; then
+     sleep 2.5
+     savew ; echo -e "\nSaving ...\n" ; basew
+     sleep 1
+     tmutil localsnapshot
+     sleep 5
+   elif [ $YN == "N" ] || [ $YN == "No" ] || [ $YN == "NO" ] || [ $YN == "n" ] || [ $YN == "no" ] ; then
+   succesw ; echo -e "\nNothing is going to be saved\n" ; basew
+   sleep 2.5
+   else
+   errorw ; echo -e "\nInvalid answer, nothing is going to be saved.\n" ; basew
+   sleep 2.5
+   fi
+elif [ $CompareVers -gt "1060" ] ; then
+  #If the OS X Vers is tested
+  succesw ; echo -e "This OS X Version is tested, if any bug is encountered please send a message to the creator of the script.\n" ; basew
+else
+  #If it's not
+  errorw ; echo -e "This OS X Version is untested, if any bug is encountered please send a message to the creator of the script.\n" ; basew
+fi
+
+#listing all installed pkgs without the apple ones
+delimiter ; pkgutil --pkgs  | sort | grep -v 'com.apple.pkg' ; delimiter
+echo -e "All the installed Packages have been listed above.\nPlease enter the name of all the Packages you want to uninstall : \n"
+read -r ListPkg
+for PkgToDel in $ListPkg
+  do
+    boldw ; echo -e "\nYou've chosen to uninstall: $PkgToDel\n" ; basew
+    pkgutil --pkg-info $PkgToDel
+    sleep 5
+    boldw echo -e "\nThose files are going to be deleted for the uninstall:\n" ; basew
+    pkgutil --only-files --files $PkgToDel | sed 's/.app.*/.app/' | sed 's@/\..*@/@g' | uniq | tr '\n' '\0' | xargs -n 1 -0
+    #The sed part is there so we can avoid some miswritting on the "pkgutil --only-files"(for example TeamViewer path is /Applications/./TeamViewer.app)
+    sleep 5
+    alertw ; echo -e "\nAre you sure to uninstall it ? (Y/N)\n" ; basew
+    read -r YesNo
+    if [ $YesNo == "Y" ] || [ $YesNo == "Yes" ] || [ $YesNo == "YES" ] || [ $YesNo == "y" ] || [ $YesNo == "yes" ] ; then
+        PkgPath=$(pkgutil --pkg-info $PkgToDel | grep 'location:' | awk '{print $2}' | sed 's@/\..*@/@g')
+        echo "Go to /$PkgPath"
+        cd /$PkgPath
+        pkgutil --only-files --files $PkgToDel | sed 's/.app.*/.app/' | uniq | tr '\n' '\0' | xargs -n 1 -0 sudo rm -vfr
+        #We use sed so we can take off the .app extension and directly delete the app if there is one
+      	pkgutil --only-dirs --files $PkgToDel |  sed 's/.app.*/.app/' | uniq | tr '\n' '\0' | xargs -n 1 -0 sudo rmdir -p
+        #We use sed so we can take off the .app extension and directly delete the app folder if there is one and if he is empty
+      	sudo pkgutil --forget $PkgToDel
+        succesw ; echo -e "\nSuccess" ; basew
+    elif [ $YesNo == "N" ] || [ $YesNo == "No" ] || [ $YesNo == "NO" ] || [ $YesNo == "n" ] || [ $YesNo == "no" ]; then
+        succesw ; echo -e "\nCanceled" ; basew
+    else
+        errorw ; echo -e "\nInvalid Answer, package skipped" ; basew
+    fi
+done
