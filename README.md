@@ -1,5 +1,5 @@
 # PiKaGu : An OS X Pkg uninstaller (Tested on 10.7 -> 10.15)
-#### Pikagu is an OS X Pkg uninstaller shell script that allows you to uninstall one or more pkg to have a clean uninstall.
+#### PiKaGu is an OS X Pkg uninstaller shell script that allows you to uninstall one or more pkg to have a clean uninstall.
 
 ## Step by Step :
 
