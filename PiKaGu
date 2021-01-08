@@ -1,6 +1,9 @@
 #!/bin/bash
 #clear
 
+##PiKaGu by Kori-San / 2021 v.1.1
+###If you want more Mac OS Utilities please check : https://github.com/Kori-San?tab=repositories
+
 #Defining all the function about writting style
 function basew()
 {
@@ -39,34 +42,17 @@ function delimiter()
   boldw ; tput blink ; echo -e "------------------------------------\n" ; basew
 }
 
-#Defining 2 vars for the OS X Vers, one in the format "10.13.0" and the other one in "10130" so we can compare it
+#Defining 2 vars for the OS X Vers, one in the format "XX.XX.XX" and the other one in "XXXXXX" so we can compare them
 OSXVers=$(sw_vers | sed -n 's/ProductVersion:.//p')
 CompareVers=$(echo $OSXVers | sed 's/\.//g')
 
 #Announcing the OS X Vers
-echo -e "\nYour OS X version is : $OSXVers\n"
+clear
+echo -e "Your OS X version is : $OSXVers\n"
 sleep 2.5
 
-#Comparing the var CompareVers
-if [ $CompareVers -gt "10130" ] ; then
-   #If the OS X Vers can make Snapshots then we ask to do it so we can avoid losing data if the code bugs
-   succesw ; echo -e "This OS X Version is tested, if any bug is encountered please send a message to the creator of the script.\n" ; basew
-   boldw ; echo -e "Your version is compatible with Snapshots.\nDo you want to make one before the script begin ? (Y/N)" ; basew
-   read -r YN
-   if [ $YN == "Y" ] || [ $YN == "Yes" ] || [ $YN == "YES" ] || [ $YN == "y" ] || [ $YN == "yes" ] ; then
-     sleep 2.5
-     savew ; echo -e "\nSaving ...\n" ; basew
-     sleep 1
-     tmutil localsnapshot
-     sleep 5
-   elif [ $YN == "N" ] || [ $YN == "No" ] || [ $YN == "NO" ] || [ $YN == "n" ] || [ $YN == "no" ] ; then
-   succesw ; echo -e "\nNothing is going to be saved\n" ; basew
-   sleep 2.5
-   else
-   errorw ; echo -e "\nInvalid answer, nothing is going to be saved.\n" ; basew
-   sleep 2.5
-   fi
-elif [ $CompareVers -gt "1060" ] ; then
+#Comparing the versions
+if [ $CompareVers -gt "1060" ] ; then
   #If the OS X Vers is tested
   succesw ; echo -e "This OS X Version is tested, if any bug is encountered please send a message to the creator of the script.\n" ; basew
 else
@@ -74,19 +60,41 @@ else
   errorw ; echo -e "This OS X Version is untested, if any bug is encountered please send a message to the creator of the script.\n" ; basew
 fi
 
+#Asking for Snapshots if it's avaible
+if [ $CompareVers -gt "10130" ] ; then
+   #If the OS X Vers can make Snapshots then we ask to do it so we can avoid losing data if the code bugs
+   boldw ; echo -e "Your version is compatible with Snapshots.\nDo you want to make one before the script begin ? (Y/N)\n" ; basew
+   read -r YN
+   if [ $YN == "Y" ] || [ $YN == "Yes" ] || [ $YN == "YES" ] || [ $YN == "y" ] || [ $YN == "yes" ] ; then
+     sleep 1
+     savew ; echo -e "\nSaving ...\n" ; basew
+     sleep 1
+     tmutil localsnapshot
+     sleep 2.5
+   elif [ $YN == "N" ] || [ $YN == "No" ] || [ $YN == "NO" ] || [ $YN == "n" ] || [ $YN == "no" ] ; then
+   succesw ; echo -e "\nNothing is going to be saved\n" ; basew
+   sleep 2.5
+   else
+   errorw ; echo -e "\nInvalid answer, nothing is going to be saved.\n" ; basew
+   sleep 2.5
+   fi
+fi
+
 #listing all installed pkgs without the apple ones
+clear
 delimiter ; pkgutil --pkgs  | sort | grep -v 'com.apple.pkg' ; delimiter
 echo -e "All the installed Packages have been listed above.\nPlease enter the name of all the Packages you want to uninstall : \n"
 read -r ListPkg
 for PkgToDel in $ListPkg
   do
+    clear
     boldw ; echo -e "\nYou've chosen to uninstall: $PkgToDel\n" ; basew
     pkgutil --pkg-info $PkgToDel
-    sleep 5
-    boldw echo -e "\nThose files are going to be deleted for the uninstall:\n" ; basew
+    sleep 2.5
+    boldw ; echo -e "\nThose files are going to be deleted for the uninstall:\n" ; basew
     pkgutil --only-files --files $PkgToDel | sed 's/.app.*/.app/' | sed 's@/\..*@/@g' | uniq | tr '\n' '\0' | xargs -n 1 -0
     #The sed part is there so we can avoid some miswritting on the "pkgutil --only-files"(for example TeamViewer path is /Applications/./TeamViewer.app)
-    sleep 5
+    sleep 2.5
     alertw ; echo -e "\nAre you sure to uninstall it ? (Y/N)\n" ; basew
     read -r YesNo
     if [ $YesNo == "Y" ] || [ $YesNo == "Yes" ] || [ $YesNo == "YES" ] || [ $YesNo == "y" ] || [ $YesNo == "yes" ] ; then
@@ -99,9 +107,12 @@ for PkgToDel in $ListPkg
         #We use sed so we can take off the .app extension and directly delete the app folder if there is one and if he is empty
       	sudo pkgutil --forget $PkgToDel
         succesw ; echo -e "\nSuccess" ; basew
+        sleep 1
     elif [ $YesNo == "N" ] || [ $YesNo == "No" ] || [ $YesNo == "NO" ] || [ $YesNo == "n" ] || [ $YesNo == "no" ]; then
         succesw ; echo -e "\nCanceled" ; basew
+        sleep 1
     else
         errorw ; echo -e "\nInvalid Answer, package skipped" ; basew
+        sleep 1
     fi
-done
+  done
