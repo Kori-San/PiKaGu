@@ -9,7 +9,7 @@ _**Also if your OS Version is compatible with snapshots it will ask you if you w
 2. PiKaGu will list you all the Pkg installed.  
 _**It will not display the system's package.**_
 
-3. Choose the packages that you want to uninstall by typing their name down or by copying their name **ONE BY ONE**, each name should be separated by a blank space.  
+3. Choose the packages that you want to uninstall by typing their name down or by writting their attributed number **ONE BY ONE**, each nouber should be separated by a blank space.  
 
 4. PiKaGu will uninstall the selected packages and will ask for a verification before every package.  
 _**The suppresion of the files will require the password of a Sudoers**_
