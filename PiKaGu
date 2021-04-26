@@ -1,8 +1,7 @@
 #!/bin/bash
 #clear
 
-##PiKaGu by Kori-San / 2021 v.1.1
-###If you want more Mac OS Utilities please check : https://github.com/Kori-San?tab=repositories
+## /-|PiKaGu v.1.2 by Kori-San / 2021|-\ ##
 
 #Defining all the function about writting style
 function basew()
@@ -52,7 +51,7 @@ echo -e "Your OS X version is : $OSXVers\n"
 sleep 2.5
 
 #Comparing the versions
-if [ $CompareVers -gt "1060" ] ; then
+if [ $CompareVers -ge "1060" ] ; then
   #If the OS X Vers is tested
   succesw ; echo -e "This OS X Version is tested, if any bug is encountered please send a message to the creator of the script.\n" ; basew
 else
@@ -61,58 +60,71 @@ else
 fi
 
 #Asking for Snapshots if it's avaible
-if [ $CompareVers -gt "10130" ] ; then
-   #If the OS X Vers can make Snapshots then we ask to do it so we can avoid losing data if the code bugs
-   boldw ; echo -e "Your version is compatible with Snapshots.\nDo you want to make one before the script begin ? (Y/N)\n" ; basew
-   read -r YN
-   if [ $YN == "Y" ] || [ $YN == "Yes" ] || [ $YN == "YES" ] || [ $YN == "y" ] || [ $YN == "yes" ] ; then
-     sleep 1
-     savew ; echo -e "\nSaving ...\n" ; basew
-     sleep 1
-     tmutil localsnapshot
+while : ; do
+  if [ $CompareVers -ge "10130" ] ; then
+     #If the OS X Vers can make Snapshots then we ask to do it so we can avoid losing data if the code bugs
+     boldw ; echo -e "Your version is compatible with Snapshots.\nDo you want to make one before the script begin ? (Y/N)\n" ; basew
+     read -r YN
+     if [ $YN == "Y" ] || [ $YN == "Yes" ] || [ $YN == "YES" ] || [ $YN == "y" ] || [ $YN == "yes" ] ; then
+       sleep 1
+       savew ; echo -e "\nSaving ...\n" ; basew
+       sleep 1
+       tmutil localsnapshot
+       sleep 2.5
+       break
+     elif [ $YN == "N" ] || [ $YN == "No" ] || [ $YN == "NO" ] || [ $YN == "n" ] || [ $YN == "no" ] ; then
+     succesw ; echo -e "\nNothing is going to be saved\n" ; basew
      sleep 2.5
-   elif [ $YN == "N" ] || [ $YN == "No" ] || [ $YN == "NO" ] || [ $YN == "n" ] || [ $YN == "no" ] ; then
-   succesw ; echo -e "\nNothing is going to be saved\n" ; basew
-   sleep 2.5
-   else
-   errorw ; echo -e "\nInvalid answer, nothing is going to be saved.\n" ; basew
-   sleep 2.5
-   fi
-fi
+     break
+     else
+     errorw ; echo -e "\nInvalid answer\n" ; basew ; clear
+     fi
+  fi
+done
 
 #listing all installed pkgs without the apple ones
 clear
-delimiter ; pkgutil --pkgs  | sort | grep -v 'com.apple.pkg' ; delimiter
-echo -e "All the installed Packages have been listed above.\nPlease enter the name of all the Packages you want to uninstall : \n"
+delimiter ; pkgutil --pkgs  | sort | grep -v 'com.apple.pkg' | grep -n '' | sed 's/:/ : /' ; delimiter
+echo -e "All the installed Packages have been listed above.\nPlease enter the numbers (Separated by a blank space) of all the Packages you want to uninstall : \n"
 read -r ListPkg
-for PkgToDel in $ListPkg
+for NbPkg in $ListPkg
+  do
+    PkgFound=$(pkgutil --pkgs  | sort | grep -v 'com.apple.pkg' | grep -n '' | sed 's/:/ : /' | grep -m 1 "$NbPkg : " | sed "s/$NbPkg : //g")
+    ListPkgToDel+=("$PkgFound")
+  done
+for PkgToDel in "${ListPkgToDel[@]}"
   do
     clear
     boldw ; echo -e "\nYou've chosen to uninstall: $PkgToDel\n" ; basew
     pkgutil --pkg-info $PkgToDel
     sleep 2.5
-    boldw ; echo -e "\nThose files are going to be deleted for the uninstall:\n" ; basew
     pkgutil --only-files --files $PkgToDel | sed 's/.app.*/.app/' | sed 's@/\..*@/@g' | uniq | tr '\n' '\0' | xargs -n 1 -0
     #The sed part is there so we can avoid some miswritting on the "pkgutil --only-files"(for example TeamViewer path is /Applications/./TeamViewer.app)
+    boldw ; echo -e "\nThose files are going to be deleted for the uninstall:\n" ; basew
     sleep 2.5
-    alertw ; echo -e "\nAre you sure to uninstall it ? (Y/N)\n" ; basew
-    read -r YesNo
-    if [ $YesNo == "Y" ] || [ $YesNo == "Yes" ] || [ $YesNo == "YES" ] || [ $YesNo == "y" ] || [ $YesNo == "yes" ] ; then
-        PkgPath=$(pkgutil --pkg-info $PkgToDel | grep 'location:' | awk '{print $2}' | sed 's@/\..*@/@g')
-        echo "Go to /$PkgPath"
-        cd /$PkgPath
-        pkgutil --only-files --files $PkgToDel | sed 's/.app.*/.app/' | uniq | tr '\n' '\0' | xargs -n 1 -0 sudo rm -vfr
-        #We use sed so we can take off the .app extension and directly delete the app if there is one
-      	pkgutil --only-dirs --files $PkgToDel |  sed 's/.app.*/.app/' | uniq | tr '\n' '\0' | xargs -n 1 -0 sudo rmdir -p
-        #We use sed so we can take off the .app extension and directly delete the app folder if there is one and if he is empty
-      	sudo pkgutil --forget $PkgToDel
-        succesw ; echo -e "\nSuccess" ; basew
-        sleep 1
-    elif [ $YesNo == "N" ] || [ $YesNo == "No" ] || [ $YesNo == "NO" ] || [ $YesNo == "n" ] || [ $YesNo == "no" ]; then
-        succesw ; echo -e "\nCanceled" ; basew
-        sleep 1
-    else
-        errorw ; echo -e "\nInvalid Answer, package skipped" ; basew
-        sleep 1
-    fi
+    while : ; do
+      alertw ; echo -e "\nAre you sure to uninstall $PkgToDel ? (Y/N)\n" ; basew
+      read -r YesNo
+      if [ $YesNo == "Y" ] || [ $YesNo == "Yes" ] || [ $YesNo == "YES" ] || [ $YesNo == "y" ] || [ $YesNo == "yes" ] ; then
+          PkgPath=$(pkgutil --pkg-info $PkgToDel | grep 'location:' | awk '{print $2}' | sed 's@/\..*@/@g')
+          echo "Go to /$PkgPath"
+          sleep 1.5
+          cd /$PkgPath
+          pkgutil --only-files --files $PkgToDel | sed 's/.app.*/.app/' | uniq | tr '\n' '\0' | xargs -n 1 -0 sudo rm -vfr
+          #We use sed so we can take off the .app extension and directly delete the app if there is one
+        	pkgutil --only-dirs --files $PkgToDel |  sed 's/.app.*/.app/' | uniq | tr '\n' '\0' | xargs -n 1 -0 sudo rmdir -p
+          #We use sed so we can take off the .app extension and directly delete the app folder if there is one and if he is empty
+        	sudo pkgutil --forget $PkgToDel
+          succesw ; echo -e "\nSuccess" ; basew
+          sleep 1
+          break
+      elif [ $YesNo == "N" ] || [ $YesNo == "No" ] || [ $YesNo == "NO" ] || [ $YesNo == "n" ] || [ $YesNo == "no" ]; then
+          succesw ; echo -e "\nCanceled" ; basew
+          sleep 1
+          break
+      else
+          errorw ; echo -e "\nInvalid Answer" ; basew
+          sleep 1
+      fi
+    done
   done
